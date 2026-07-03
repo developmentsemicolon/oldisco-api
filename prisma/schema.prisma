@@ -1,0 +1,207 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String   @id @default(uuid())
+  email                String   @unique
+  name                 String
+  password             String? // Nullable para OAuth
+  role                 UserRole @default(USER)
+  avatar               String?
+  emailVerified        Boolean  @default(false)
+  onboardingCompleted  Boolean  @default(false)
+  googleId             String?  @unique
+  oneSignalPlayerId    String? // Player ID do OneSignal para notificações push
+  emailNotifications   Boolean  @default(true)
+  pushNotifications    Boolean  @default(true)
+  notificationSettings Json? // Configurações granulares de notificações
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  blogPosts            BlogPost[]
+  sessions             Session[]
+  radioTracksAdded     RadioTrack[]
+
+  @@index([oneSignalPlayerId])
+  @@map("users")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  BAND
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  band        String
+  album       String
+  genre       String
+  year        Int
+  price       Float
+  stock       Int      @default(0) // Quantidade em estoque
+  available   Boolean  @default(true)
+  images      String[] // Array de URLs de imagens
+  tracklist   Json? // { sideA: string[], sideB?: string[] }
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("products")
+}
+
+model BlogPost {
+  id        String   @id @default(uuid())
+  slug      String   @unique
+  title     String
+  date      DateTime @default(now())
+  excerpt   String
+  content   String
+  image     String?
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("blog_posts")
+}
+
+model UpcomingRelease {
+  id          String              @id @default(uuid())
+  slug        String              @unique
+  title       String
+  band        String
+  album       String
+  genre       String
+  releaseDate DateTime
+  description String?
+  image       String?
+  status      ReleaseStatus       @default(ANNOUNCED)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@map("upcoming_releases")
+}
+
+enum ReleaseStatus {
+  ANNOUNCED
+  COMING_SOON
+  RELEASED
+}
+
+model Session {
+  id             String   @id @default(uuid())
+  userId         String
+  token          String // Hash ou identificador único do token JWT
+  userAgent      String? // User agent do navegador/dispositivo
+  ipAddress      String? // IP do cliente
+  deviceInfo     String? // Informação do dispositivo extraída do userAgent
+  location       String? // Localização se disponível
+  isActive       Boolean  @default(true)
+  lastActivityAt DateTime @default(now())
+  expiresAt      DateTime // Quando o token expira
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive])
+  @@index([userId])
+  @@map("sessions")
+}
+
+model RadioTrack {
+  id          String   @id @default(uuid())
+  title       String
+  artist      String
+  band        String?
+  album       String?
+  genre       String?
+  duration    Int?     // em segundos
+  fileUrl     String   // URL pública do R2
+  r2Key       String   // Chave no R2 (path)
+  fileSize    Int      // tamanho em bytes
+  mimeType    String   // audio/mpeg, audio/ogg, etc
+  status      RadioTrackStatus @default(ACTIVE)
+  priority    Int      @default(0) // Para ordenação
+  playCount   Int      @default(0)
+  lastPlayedAt DateTime?
+  addedById   String
+  addedBy     User     @relation(fields: [addedById], references: [id])
+  radioConfig RadioConfig? @relation("CurrentTrack")
+  playlistTracks PlaylistTrack[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status, priority])
+  @@index([addedById])
+  @@map("radio_tracks")
+}
+
+enum RadioTrackStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+model RadioConfig {
+  id          String   @id @default(uuid())
+  isPlaying   Boolean  @default(false)
+  currentTrackId String? @unique
+  currentTrack RadioTrack? @relation("CurrentTrack", fields: [currentTrackId], references: [id], onDelete: SetNull)
+  updatedAt   DateTime @updatedAt
+
+  @@map("radio_config")
+}
+
+model Playlist {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  tracks      PlaylistTrack[]
+  schedules   Schedule[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("playlists")
+}
+
+model PlaylistTrack {
+  id         String   @id @default(uuid())
+  playlistId String
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  trackId    String
+  track      RadioTrack @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  order      Int      // Ordem na playlist
+  createdAt  DateTime @default(now())
+
+  @@unique([playlistId, trackId])
+  @@index([playlistId, order])
+  @@map("playlist_tracks")
+}
+
+model Schedule {
+  id         String   @id @default(uuid())
+  dayOfWeek  Int      // 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
+  startTime  String   // Formato HH:mm (ex: "08:00")
+  endTime    String   // Formato HH:mm (ex: "12:00")
+  playlistId String
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([dayOfWeek, isActive])
+  @@index([playlistId])
+  @@map("schedules")
+}
+
