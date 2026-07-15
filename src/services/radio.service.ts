@@ -374,6 +374,50 @@ class RadioService {
   }
 
   /**
+   * Resolve a URL pública (ou presigned) de uma track
+   */
+  private async resolveTrackUrl(track: RadioTrack): Promise<string> {
+    if (track.fileUrl && track.fileUrl.startsWith('http')) {
+      return track.fileUrl;
+    }
+    return r2StorageService.generatePresignedUrl(track.r2Key, 3600);
+  }
+
+  /**
+   * Playlist pública com URLs resolvidas para o player do site.
+   * O frontend avança as faixas localmente; startIndex só sugere onde começar.
+   */
+  async getPublicPlaylist() {
+    const config = await this.getRadioConfig();
+    const currentSchedule = await this.getCurrentSchedule();
+    const playlist = await this.getActivePlaylist();
+
+    let startIndex = 0;
+    if (currentSchedule && playlist.length > 0) {
+      startIndex = await this.calculateCurrentTrackIndex(playlist, currentSchedule);
+      startIndex = startIndex % playlist.length;
+    }
+
+    const tracks = await Promise.all(
+      playlist.map(async (track) => ({
+        id: track.id,
+        title: track.title,
+        artist: track.artist,
+        album: track.album,
+        duration: track.duration,
+        fileUrl: await this.resolveTrackUrl(track),
+      })),
+    );
+
+    return {
+      isPlaying: config.isPlaying,
+      playlistName: currentSchedule?.playlist?.name ?? 'TRANSMISSÃO BRUTAL',
+      startIndex,
+      tracks,
+    };
+  }
+
+  /**
    * Obtém status da rádio
    */
   async getStatus() {

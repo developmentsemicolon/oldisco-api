@@ -23,6 +23,7 @@ export const radioRoutes = new Elysia({ tags: ['radio', 'radio-admin'] })
         return { url: result.url, track: result.track };
       })
       .get('/status', () => radioService.getStatus())
+      .get('/playlist', () => radioService.getPublicPlaylist())
       .get('/current', async () => ({ track: await radioService.getCurrentTrack() })),
   )
   .group('/radio/admin', (app) =>
