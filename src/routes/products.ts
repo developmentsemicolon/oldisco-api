@@ -40,6 +40,7 @@ export const productsRoutes = new Elysia({ prefix: '/products', tags: ['products
           description: body.description,
           available: body.available === undefined ? undefined : body.available === true || body.available === 'true',
           tracklist,
+          catalogNumber: body.catalogNumber,
         },
         images,
       );
@@ -57,6 +58,7 @@ export const productsRoutes = new Elysia({ prefix: '/products', tags: ['products
         available: t.Optional(t.Union([t.Boolean(), t.String()])),
         tracklist: t.Optional(t.Union([TracklistSchema, t.String()])),
         images: t.Union([t.File(), t.Array(t.File())]),
+        catalogNumber: t.Optional(t.String()),
       }),
     },
   )

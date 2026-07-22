@@ -15,6 +15,7 @@ export const CreateProductSchema = t.Object({
   description: t.Optional(t.String()),
   available: t.Optional(t.Boolean()),
   tracklist: t.Optional(TracklistSchema),
+  catalogNumber: t.Optional(t.String()),
 });
 
 export const UpdateProductSchema = t.Partial(CreateProductSchema);

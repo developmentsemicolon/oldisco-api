@@ -42,21 +42,35 @@ enum UserRole {
 }
 
 model Product {
+  id            String   @id @default(uuid())
+  band          String
+  album         String
+  genre         String
+  year          Int
+  price         Float
+  stock         Int      @default(0) // Quantidade em estoque
+  available     Boolean  @default(true)
+  images        String[] // Array de URLs de imagens
+  tracklist     Json? // { sideA: string[], sideB?: string[] }
+  description   String?
+  catalogNumber String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("products")
+}
+
+model Band {
   id          String   @id @default(uuid())
-  band        String
-  album       String
+  name        String
+  slug        String   @unique
   genre       String
-  year        Int
-  price       Float
-  stock       Int      @default(0) // Quantidade em estoque
-  available   Boolean  @default(true)
-  images      String[] // Array de URLs de imagens
-  tracklist   Json? // { sideA: string[], sideB?: string[] }
   description String?
+  logo        String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  @@map("products")
+  @@map("bands")
 }
 
 model BlogPost {

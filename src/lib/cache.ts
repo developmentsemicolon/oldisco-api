@@ -72,4 +72,16 @@ export const cache = {
   async invalidateReleases(): Promise<void> {
     await this.del('releases:all');
   },
+
+  async getBands(): Promise<unknown[] | undefined> {
+    return this.get<unknown[]>('bands:all');
+  },
+
+  async setBands(bands: unknown[], ttl?: number): Promise<void> {
+    await this.set('bands:all', bands, ttl);
+  },
+
+  async invalidateBands(): Promise<void> {
+    await this.del('bands:all');
+  },
 };

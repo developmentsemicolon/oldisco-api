@@ -55,6 +55,11 @@ export const cloudinaryService = {
     return `demotapes/releases/${uuidv4()}${ext}`;
   },
 
+  generateBandImageKey(originalName: string): string {
+    const ext = extname(originalName);
+    return `demotapes/bands/${uuidv4()}${ext}`;
+  },
+
   async uploadImage(
     file: UploadFile,
     folder: string,
@@ -103,6 +108,10 @@ export const cloudinaryService = {
 
   uploadReleaseImage(file: UploadFile) {
     return this.uploadImage(file, 'demotapes/releases', this.generateReleaseImageKey.bind(this));
+  },
+
+  uploadBandImage(file: UploadFile) {
+    return this.uploadImage(file, 'demotapes/bands', this.generateBandImageKey.bind(this));
   },
 
   async deleteImage(publicId: string): Promise<void> {
