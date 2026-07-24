@@ -1,6 +1,4 @@
 import { v2 as cloudinary } from 'cloudinary';
-import { Readable } from 'stream';
-import { extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { env } from '../config/env';
 import { HttpError } from '../lib/errors';
@@ -40,78 +38,50 @@ export const cloudinaryService = {
     }
   },
 
-  generateProductImageKey(originalName: string): string {
-    const ext = extname(originalName);
-    return `demotapes/products/${uuidv4()}${ext}`;
-  },
-
-  generateBlogImageKey(originalName: string): string {
-    const ext = extname(originalName);
-    return `demotapes/blog/${uuidv4()}${ext}`;
-  },
-
-  generateReleaseImageKey(originalName: string): string {
-    const ext = extname(originalName);
-    return `demotapes/releases/${uuidv4()}${ext}`;
-  },
-
-  generateBandImageKey(originalName: string): string {
-    const ext = extname(originalName);
-    return `demotapes/bands/${uuidv4()}${ext}`;
-  },
-
   async uploadImage(
     file: UploadFile,
     folder: string,
-    generateKey: (name: string) => string,
   ): Promise<{ key: string; url: string }> {
     this.validateImageFile(file);
 
-    const publicId = generateKey(file.originalname).replace(/\.[^/.]+$/, '');
+    if (!env.cloudinary.cloudName || !env.cloudinary.apiKey || !env.cloudinary.apiSecret) {
+      throw new HttpError(500, 'Cloudinary is not configured', 'Internal Server Error');
+    }
 
-    return new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          public_id: publicId,
-          folder,
-          resource_type: 'image',
-          quality: 'auto:good',
-          fetch_format: 'auto',
-          flags: ['progressive'],
-          transformation: [{ quality: 'auto:good', fetch_format: 'auto' }],
-        },
-        (error, result) => {
-          if (error) {
-            reject(new HttpError(400, `Failed to upload image: ${error.message}`, 'Bad Request'));
-          } else if (!result) {
-            reject(new HttpError(400, 'Failed to upload image: No result returned', 'Bad Request'));
-          } else {
-            resolve({ key: result.public_id, url: result.secure_url });
-          }
-        },
-      );
+    // Bun + upload_stream treats requests as unsigned; use uploader.upload with data URI instead
+    const publicId = uuidv4();
+    const dataUri = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
 
-      const bufferStream = new Readable();
-      bufferStream.push(file.buffer);
-      bufferStream.push(null);
-      bufferStream.pipe(uploadStream);
-    });
+    try {
+      const result = await cloudinary.uploader.upload(dataUri, {
+        public_id: publicId,
+        folder,
+        resource_type: 'image',
+        quality: 'auto:good',
+        fetch_format: 'auto',
+      });
+
+      return { key: result.public_id, url: result.secure_url };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new HttpError(400, `Failed to upload image: ${message}`, 'Bad Request');
+    }
   },
 
   uploadProductImage(file: UploadFile) {
-    return this.uploadImage(file, 'demotapes/products', this.generateProductImageKey.bind(this));
+    return this.uploadImage(file, 'demotapes/products');
   },
 
   uploadBlogImage(file: UploadFile) {
-    return this.uploadImage(file, 'demotapes/blog', this.generateBlogImageKey.bind(this));
+    return this.uploadImage(file, 'demotapes/blog');
   },
 
   uploadReleaseImage(file: UploadFile) {
-    return this.uploadImage(file, 'demotapes/releases', this.generateReleaseImageKey.bind(this));
+    return this.uploadImage(file, 'demotapes/releases');
   },
 
   uploadBandImage(file: UploadFile) {
-    return this.uploadImage(file, 'demotapes/bands', this.generateBandImageKey.bind(this));
+    return this.uploadImage(file, 'demotapes/bands');
   },
 
   async deleteImage(publicId: string): Promise<void> {
