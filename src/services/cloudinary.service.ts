@@ -84,6 +84,10 @@ export const cloudinaryService = {
     return this.uploadImage(file, 'demotapes/bands');
   },
 
+  uploadZineImage(file: UploadFile) {
+    return this.uploadImage(file, 'demotapes/zines');
+  },
+
   async deleteImage(publicId: string): Promise<void> {
     try {
       await cloudinary.uploader.destroy(publicId);

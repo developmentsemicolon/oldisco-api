@@ -8,6 +8,7 @@ import { productsRoutes } from './routes/products';
 import { blogRoutes } from './routes/blog';
 import { releasesRoutes } from './routes/releases';
 import { bandsRoutes } from './routes/bands';
+import { zinesRoutes } from './routes/zines';
 import { radioRoutes } from './routes/radio';
 import { usersRoutes } from './routes/users';
 
@@ -35,6 +36,7 @@ const app = new Elysia()
           { name: 'blog', description: 'Blog posts' },
           { name: 'releases', description: 'Upcoming releases' },
           { name: 'bands', description: 'Bands catalog' },
+          { name: 'zines', description: 'Zine editions' },
           { name: 'radio', description: 'Public radio endpoints' },
           { name: 'radio-admin', description: 'Radio admin endpoints' },
           { name: 'users', description: 'User profile' },
@@ -86,6 +88,7 @@ const app = new Elysia()
   .use(blogRoutes)
   .use(releasesRoutes)
   .use(bandsRoutes)
+  .use(zinesRoutes)
   .use(radioRoutes)
   .use(usersRoutes)
   .get('/', () => ({ status: 'ok', message: 'Demo Tapes API' }))

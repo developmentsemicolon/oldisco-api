@@ -73,6 +73,21 @@ model Band {
   @@map("bands")
 }
 
+model ZineEdition {
+  id            String   @id @default(uuid())
+  title         String
+  slug          String   @unique
+  editionNumber Int
+  description   String?
+  coverImage    String?
+  pages         String[] // URLs em ordem (página 1, 2, ...)
+  published     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("zine_editions")
+}
+
 model BlogPost {
   id        String   @id @default(uuid())
   slug      String   @unique
