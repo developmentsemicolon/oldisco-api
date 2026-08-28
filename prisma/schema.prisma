@@ -80,7 +80,7 @@ model ZineEdition {
   editionNumber Int
   description   String?
   coverImage    String?
-  content       String   @default("")
+  pages         String[] // URLs em ordem (página 1, 2, ...)
   published     Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

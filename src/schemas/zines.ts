@@ -5,7 +5,7 @@ export const CreateZineSchema = t.Object({
   editionNumber: t.Number(),
   description: t.Optional(t.String()),
   coverImage: t.Optional(t.String()),
-  content: t.String(),
+  pages: t.Array(t.String()),
   published: t.Optional(t.Boolean()),
 });
 
